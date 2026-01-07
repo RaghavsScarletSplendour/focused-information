@@ -1,16 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-
-export interface QueueItem {
-  id: string
-  rawContent: string
-  header: string
-  summary: string
-  status: 'queued' | 'completed'
-  createdAt: number
-  sourceUrl?: string | null
-}
+import { QueueItem } from '@/types'
 
 interface FocusCardProps {
   item: QueueItem
@@ -35,6 +26,15 @@ export default function FocusCard({ item, onMarkLearned }: FocusCardProps) {
         isMarking ? 'opacity-0 translate-y-4' : ''
       }`}
     >
+      {/* Complexity Badge */}
+      {item.complexityScore && (
+        <div className="mb-4">
+          <span className="inline-block px-2 py-1 text-xs border border-faded text-faded">
+            {item.category || 'General'} | Level {item.complexityScore}/10
+          </span>
+        </div>
+      )}
+
       {/* Header */}
       <h1 className="text-2xl font-bold mb-6 leading-tight">
         {item.header}
