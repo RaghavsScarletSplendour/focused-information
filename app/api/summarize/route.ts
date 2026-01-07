@@ -31,6 +31,9 @@ OUTPUT FORMAT (JSON):
 
 Respond ONLY with valid JSON. No additional text.`
 
+const FETCH_TIMEOUT = 10000 // 10 seconds
+const MAX_CONTENT_LENGTH = 4000 // chars to send to GPT
+
 function isValidUrl(str: string): boolean {
   try {
     const url = new URL(str.trim())
@@ -44,6 +47,94 @@ function extractUrl(input: string): string | null {
   const urlRegex = /(https?:\/\/[^\s]+)/gi
   const matches = input.match(urlRegex)
   return matches ? matches[0] : null
+}
+
+function getUrlType(url: string): 'x.com' | 'general' | null {
+  try {
+    const parsed = new URL(url)
+    if (parsed.hostname === 'x.com') return 'x.com'
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') return 'general'
+    return null
+  } catch {
+    return null
+  }
+}
+
+async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise<Response> {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT)
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    })
+    return response
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
+async function fetchWithJina(url: string): Promise<string> {
+  const jinaUrl = `https://r.jina.ai/${url}`
+  const response = await fetchWithTimeout(jinaUrl, {
+    headers: { 'Accept': 'text/plain' }
+  })
+
+  if (!response.ok) {
+    throw new Error(`Jina fetch failed: ${response.status}`)
+  }
+
+  const text = await response.text()
+  return text.slice(0, MAX_CONTENT_LENGTH)
+}
+
+async function fetchXPost(url: string): Promise<string> {
+  // x.com/user/status/123 → api.fxtwitter.com/user/status/123
+  const apiUrl = url.replace('x.com', 'api.fxtwitter.com')
+  const response = await fetchWithTimeout(apiUrl)
+
+  if (!response.ok) {
+    throw new Error(`FxTwitter fetch failed: ${response.status}`)
+  }
+
+  const data = await response.json()
+  const tweet = data.tweet
+
+  if (!tweet) {
+    throw new Error('No tweet data in response')
+  }
+
+  // Format tweet data for the LLM
+  let content = `Tweet by @${tweet.author?.screen_name || 'unknown'}:\n${tweet.text || ''}`
+
+  if (tweet.media?.photos?.length) {
+    content += `\n[Contains ${tweet.media.photos.length} image(s)]`
+  }
+  if (tweet.media?.videos?.length) {
+    content += `\n[Contains ${tweet.media.videos.length} video(s)]`
+  }
+
+  content += `\nLikes: ${tweet.likes || 0}, Retweets: ${tweet.retweets || 0}`
+
+  return content
+}
+
+async function fetchUrlContent(url: string): Promise<string | null> {
+  const urlType = getUrlType(url)
+
+  if (!urlType) return null
+
+  try {
+    if (urlType === 'x.com') {
+      return await fetchXPost(url)
+    } else {
+      return await fetchWithJina(url)
+    }
+  } catch (error) {
+    console.warn(`Failed to fetch URL content: ${error}`)
+    return null // Fall back to URL-only mode
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -71,9 +162,17 @@ export async function POST(request: NextRequest) {
     const detectedUrl = extractUrl(trimmedInput)
     const sourceUrl = isValidUrl(trimmedInput) ? trimmedInput : detectedUrl
 
-    const userMessage = sourceUrl
-      ? `Analyze this URL and create a learning card: ${trimmedInput}`
-      : `Analyze this content and create a learning card:\n\n${trimmedInput}`
+    // Fetch URL content if a URL is detected
+    let contentToAnalyze = trimmedInput
+    if (sourceUrl) {
+      const fetchedContent = await fetchUrlContent(sourceUrl)
+      if (fetchedContent) {
+        contentToAnalyze = fetchedContent
+        console.log(`Fetched content for ${sourceUrl} (${fetchedContent.length} chars)`)
+      }
+    }
+
+    const userMessage = `Analyze this content and create a learning card:\n\n${contentToAnalyze}`
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
