@@ -5,9 +5,16 @@ import { useState } from 'react'
 interface DumpFormProps {
   onSubmit: (input: string) => Promise<void>
   isProcessing: boolean
+  isCollapsed: boolean
+  onToggle: () => void
 }
 
-export default function DumpForm({ onSubmit, isProcessing }: DumpFormProps) {
+export default function DumpForm({
+  onSubmit,
+  isProcessing,
+  isCollapsed,
+  onToggle,
+}: DumpFormProps) {
   const [input, setInput] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -17,67 +24,59 @@ export default function DumpForm({ onSubmit, isProcessing }: DumpFormProps) {
     setInput('')
   }
 
-  return (
-    <div className="work-order p-8 shadow-card">
-      {/* Header */}
-      <div className="mb-8 pb-4 border-b border-dashed border-faded">
-        <h1 className="text-2xl font-bold mb-2">Focus First</h1>
-        <p className="text-faded text-sm">
-          One thing to learn today, and nothing else.
-        </p>
-      </div>
+  if (isCollapsed) {
+    return (
+      <button
+        onClick={onToggle}
+        className="w-full border-2 border-ink bg-paper p-4 text-left text-faded hover:text-ink hover:bg-paper transition-colors"
+      >
+        + Dump AI News/Links
+      </button>
+    )
+  }
 
+  return (
+    <div className="border-2 border-ink bg-paper p-8">
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Instructions */}
-        <div className="text-sm text-faded space-y-1">
-          <p>→ Paste a URL (article, GitHub repo, paper)</p>
-          <p>→ Or paste raw text (X thread, notes, excerpt)</p>
-        </div>
+        {/* Label */}
+        <label htmlFor="dump-input" className="block text-sm text-faded">
+          Dump AI News/Links
+        </label>
 
         {/* Input Area */}
-        <div>
-          <label htmlFor="dump-input" className="sr-only">
-            Your input
-          </label>
-          <textarea
-            id="dump-input"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Paste URL or text here..."
-            rows={6}
-            disabled={isProcessing}
-            className="w-full bg-transparent border-2 border-ink p-4 font-mono text-ink placeholder:text-faded resize-none focus:outline-none focus:ring-2 focus:ring-ink focus:ring-offset-2 focus:ring-offset-paper disabled:opacity-50"
-          />
-        </div>
+        <textarea
+          id="dump-input"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Paste URL or text..."
+          rows={4}
+          disabled={isProcessing}
+          autoFocus
+          className="w-full bg-transparent border-2 border-ink p-4 font-mono text-ink placeholder:text-faded resize-none focus:outline-none disabled:opacity-50"
+        />
 
-        {/* Submit Button */}
-        <div className="flex justify-end">
+        {/* Actions */}
+        <div className="flex justify-between items-center">
+          <button
+            type="button"
+            onClick={onToggle}
+            className="text-sm text-faded hover:text-ink transition-colors"
+          >
+            Cancel
+          </button>
           <button
             type="submit"
             disabled={!input.trim() || isProcessing}
             className="btn-process"
           >
             {isProcessing ? (
-              <>
-                <span className="animate-pulse mr-2">◉</span>
-                Processing...
-              </>
+              <span className="animate-pulse">Processing...</span>
             ) : (
-              <>
-                Process
-                <span className="ml-2">→</span>
-              </>
+              'Queue'
             )}
           </button>
         </div>
       </form>
-
-      {/* Footer hint */}
-      <div className="mt-8 pt-4 border-t border-dashed border-faded">
-        <p className="text-xs text-faded text-center">
-          We strip the hype. You get the signal.
-        </p>
-      </div>
     </div>
   )
 }

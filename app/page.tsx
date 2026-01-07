@@ -2,24 +2,25 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import DumpForm from '@/components/DumpForm'
-import LearningCard, { LearningCardData } from '@/components/LearningCard'
+import FocusCard, { QueueItem } from '@/components/FocusCard'
 
-const STORAGE_KEY = 'focus-first-active-card'
+const STORAGE_KEY = 'signal_queue'
 
 export default function Home() {
-  const [activeCard, setActiveCard] = useState<LearningCardData | null>(null)
+  const [queue, setQueue] = useState<QueueItem[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isLoaded, setIsLoaded] = useState(false)
+  const [isDumpExpanded, setIsDumpExpanded] = useState(false)
 
-  // Load active card from localStorage on mount
+  // Load queue from localStorage on mount
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
       if (stored) {
         const parsed = JSON.parse(stored)
-        if (parsed && !parsed.learned) {
-          setActiveCard(parsed)
+        if (Array.isArray(parsed)) {
+          setQueue(parsed.filter((item: QueueItem) => item.status === 'queued'))
         }
       }
     } catch (e) {
@@ -28,20 +29,23 @@ export default function Home() {
     setIsLoaded(true)
   }, [])
 
-  // Save active card to localStorage
+  // Save queue to localStorage
   useEffect(() => {
     if (!isLoaded) return
 
     try {
-      if (activeCard) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(activeCard))
-      } else {
-        localStorage.removeItem(STORAGE_KEY)
-      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(queue))
     } catch (e) {
       console.error('Failed to save to localStorage:', e)
     }
-  }, [activeCard, isLoaded])
+  }, [queue, isLoaded])
+
+  // Collapse dump form when queue has items
+  useEffect(() => {
+    if (queue.length > 0 && isDumpExpanded) {
+      setIsDumpExpanded(false)
+    }
+  }, [queue.length])
 
   const handleSubmit = useCallback(async (input: string) => {
     setIsProcessing(true)
@@ -63,18 +67,18 @@ export default function Home() {
 
       const data = await response.json()
 
-      const newCard: LearningCardData = {
+      const newItem: QueueItem = {
         id: crypto.randomUUID(),
+        rawContent: input,
         header: data.header,
-        whatItIs: data.whatItIs,
-        whyItMatters: data.whyItMatters,
+        summary: data.summary,
+        status: 'queued',
+        createdAt: Date.now(),
         sourceUrl: data.sourceUrl,
-        sourceType: data.sourceType,
-        createdAt: new Date().toISOString(),
-        learned: false,
       }
 
-      setActiveCard(newCard)
+      setQueue((prev) => [...prev, newItem])
+      setIsDumpExpanded(false)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong')
     } finally {
@@ -83,22 +87,13 @@ export default function Home() {
   }, [])
 
   const handleMarkLearned = useCallback(() => {
-    if (activeCard) {
-      // Optionally store to history
-      try {
-        const historyKey = 'focus-first-history'
-        const history = JSON.parse(localStorage.getItem(historyKey) || '[]')
-        history.unshift({ ...activeCard, learned: true, learnedAt: new Date().toISOString() })
-        // Keep only last 50 items
-        localStorage.setItem(historyKey, JSON.stringify(history.slice(0, 50)))
-      } catch (e) {
-        console.error('Failed to save to history:', e)
-      }
-    }
-    setActiveCard(null)
-  }, [activeCard])
+    setQueue((prev) => prev.slice(1))
+  }, [])
 
-  // Don't render until we've loaded from localStorage
+  const toggleDump = useCallback(() => {
+    setIsDumpExpanded((prev) => !prev)
+  }, [])
+
   if (!isLoaded) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -106,6 +101,9 @@ export default function Home() {
       </div>
     )
   }
+
+  const currentItem = queue[0]
+  const remainingCount = queue.length - 1
 
   return (
     <div className="space-y-6">
@@ -122,19 +120,36 @@ export default function Home() {
         </div>
       )}
 
-      {/* Main Content - FOCUS MODE */}
-      {activeCard ? (
-        // LASER FOCUS: Only show the active card
-        <LearningCard card={activeCard} onMarkLearned={handleMarkLearned} />
+      {/* Dump Form - collapsible when queue has items */}
+      {queue.length > 0 ? (
+        <DumpForm
+          onSubmit={handleSubmit}
+          isProcessing={isProcessing}
+          isCollapsed={!isDumpExpanded}
+          onToggle={toggleDump}
+        />
       ) : (
-        // DUMP MODE: Show input form only when no active card
-        <DumpForm onSubmit={handleSubmit} isProcessing={isProcessing} />
+        <DumpForm
+          onSubmit={handleSubmit}
+          isProcessing={isProcessing}
+          isCollapsed={false}
+          onToggle={() => {}}
+        />
       )}
 
-      {/* Minimal footer - only when no active card */}
-      {!activeCard && (
-        <p className="text-center text-xs text-faded mt-8">
-          Focus on one thing. Learn it. Then move on.
+      {/* Focus Card or Empty State */}
+      {currentItem ? (
+        <FocusCard item={currentItem} onMarkLearned={handleMarkLearned} />
+      ) : (
+        <div className="border-2 border-ink bg-paper p-8 text-center">
+          <p className="text-faded">All clear. Stay focused.</p>
+        </div>
+      )}
+
+      {/* Queue Count */}
+      {remainingCount > 0 && (
+        <p className="text-center text-xs text-faded">
+          {remainingCount} more in signal
         </p>
       )}
     </div>
