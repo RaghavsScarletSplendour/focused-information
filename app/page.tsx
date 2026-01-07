@@ -139,7 +139,7 @@ export default function Home() {
 
       {/* Focus Card or Empty State */}
       {currentItem ? (
-        <FocusCard item={currentItem} onMarkLearned={handleMarkLearned} />
+        <FocusCard key={currentItem.id} item={currentItem} onMarkLearned={handleMarkLearned} />
       ) : (
         <div className="border-2 border-ink bg-paper p-8 text-center">
           <p className="text-faded">All clear. Stay focused.</p>
