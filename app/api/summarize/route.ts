@@ -106,8 +106,25 @@ async function fetchXPost(url: string): Promise<string> {
   }
 
   // Format tweet data for the LLM
-  let content = `Tweet by @${tweet.author?.screen_name || 'unknown'}:\n${tweet.text || ''}`
+  let content = `Tweet by @${tweet.author?.screen_name || 'unknown'}:`
 
+  // Primary content: tweet text
+  if (tweet.text && tweet.text.trim()) {
+    content += `\n${tweet.text}`
+  }
+
+  // If tweet has article/URL card, include that (for link-only tweets)
+  const article = tweet.article || tweet.card
+  if (article) {
+    if (article.title) {
+      content += `\n\nLinked Article: ${article.title}`
+    }
+    if (article.description) {
+      content += `\n${article.description}`
+    }
+  }
+
+  // Media info
   if (tweet.media?.photos?.length) {
     content += `\n[Contains ${tweet.media.photos.length} image(s)]`
   }
@@ -115,6 +132,7 @@ async function fetchXPost(url: string): Promise<string> {
     content += `\n[Contains ${tweet.media.videos.length} video(s)]`
   }
 
+  // Engagement context
   content += `\nLikes: ${tweet.likes || 0}, Retweets: ${tweet.retweets || 0}`
 
   return content
