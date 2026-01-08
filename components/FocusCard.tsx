@@ -51,7 +51,7 @@ export default function FocusCard({ item, onMarkLearned }: FocusCardProps) {
 
       {/* Source Link */}
       {item.sourceUrl && (
-        <div className="mb-8 pt-4 border-t border-ink">
+        <div className="mb-8">
           <a
             href={item.sourceUrl}
             target="_blank"
@@ -64,7 +64,7 @@ export default function FocusCard({ item, onMarkLearned }: FocusCardProps) {
       )}
 
       {/* Action */}
-      <div className="pt-6 border-t-2 border-ink flex justify-center">
+      <div className="pt-6 flex justify-center">
         <button
           onClick={handleMarkLearned}
           className="btn-learned"
