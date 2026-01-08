@@ -5,16 +5,21 @@ import { motion, AnimatePresence } from 'framer-motion'
 import DumpForm from '@/components/DumpForm'
 import FocusCard from '@/components/FocusCard'
 import ArchitectReasoning from '@/components/ArchitectReasoning'
-import { QueueItem, ArchitectState, ArchitectResponse } from '@/types'
+import ArchiveDrawer from '@/components/ArchiveDrawer'
+import { QueueItem, ArchitectState, ArchitectResponse, ArchiveItem } from '@/types'
 
 const STORAGE_KEY = 'signal_queue'
+const HISTORY_KEY = 'focus-first-history'
+const MAX_ARCHIVE_ITEMS = 50
 
 export default function Home() {
   const [queue, setQueue] = useState<QueueItem[]>([])
+  const [archive, setArchive] = useState<ArchiveItem[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isLoaded, setIsLoaded] = useState(false)
   const [isDumpExpanded, setIsDumpExpanded] = useState(false)
+  const [isArchiveOpen, setIsArchiveOpen] = useState(false)
 
   // Architect state
   const [architectState, setArchitectState] = useState<ArchitectState>({
@@ -25,14 +30,22 @@ export default function Home() {
   // Debounce ref for architect analysis
   const architectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Load queue from localStorage on mount
+  // Load queue and archive from localStorage on mount
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        const parsed = JSON.parse(stored)
+      const storedQueue = localStorage.getItem(STORAGE_KEY)
+      if (storedQueue) {
+        const parsed = JSON.parse(storedQueue)
         if (Array.isArray(parsed)) {
           setQueue(parsed.filter((item: QueueItem) => item.status === 'queued'))
+        }
+      }
+
+      const storedArchive = localStorage.getItem(HISTORY_KEY)
+      if (storedArchive) {
+        const parsed = JSON.parse(storedArchive)
+        if (Array.isArray(parsed)) {
+          setArchive(parsed)
         }
       }
     } catch (e) {
@@ -51,6 +64,17 @@ export default function Home() {
       console.error('Failed to save to localStorage:', e)
     }
   }, [queue, isLoaded])
+
+  // Save archive to localStorage
+  useEffect(() => {
+    if (!isLoaded) return
+
+    try {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(archive))
+    } catch (e) {
+      console.error('Failed to save archive to localStorage:', e)
+    }
+  }, [archive, isLoaded])
 
   // Collapse dump form when queue has items
   useEffect(() => {
@@ -166,6 +190,23 @@ export default function Home() {
 
   const handleMarkLearned = useCallback(() => {
     setQueue((prev) => {
+      const learnedItem = prev[0]
+      if (learnedItem) {
+        // Add to archive
+        const archiveItem: ArchiveItem = {
+          id: learnedItem.id,
+          header: learnedItem.header,
+          summary: learnedItem.summary,
+          sourceUrl: learnedItem.sourceUrl,
+          learnedAt: Date.now(),
+        }
+        setArchive((prevArchive) => {
+          const newArchive = [archiveItem, ...prevArchive]
+          // Keep only the most recent items
+          return newArchive.slice(0, MAX_ARCHIVE_ITEMS)
+        })
+      }
+
       const newQueue = prev.slice(1)
       // Trigger architect analysis if more than 1 item remains
       if (newQueue.length > 1) {
@@ -176,6 +217,35 @@ export default function Home() {
       return newQueue
     })
   }, [scheduleArchitectAnalysis])
+
+  const handleRequeue = useCallback((item: ArchiveItem) => {
+    // Remove from archive
+    setArchive((prev) => prev.filter((i) => i.id !== item.id))
+
+    // Add back to queue as a new item
+    const requeuedItem: QueueItem = {
+      id: crypto.randomUUID(),
+      rawContent: item.header,
+      header: item.header,
+      summary: item.summary,
+      status: 'queued',
+      createdAt: Date.now(),
+      sourceUrl: item.sourceUrl,
+    }
+
+    setQueue((prev) => {
+      const newQueue = [...prev, requeuedItem]
+      scheduleArchitectAnalysis(newQueue, 'item_added')
+      return newQueue
+    })
+
+    // Close archive drawer
+    setIsArchiveOpen(false)
+  }, [scheduleArchitectAnalysis])
+
+  const toggleArchive = useCallback(() => {
+    setIsArchiveOpen((prev) => !prev)
+  }, [])
 
   const toggleDump = useCallback(() => {
     setIsDumpExpanded((prev) => !prev)
@@ -194,6 +264,16 @@ export default function Home() {
 
   return (
     <div className="space-y-6">
+      {/* Archive Toggle */}
+      <div className="flex justify-end">
+        <button
+          onClick={toggleArchive}
+          className="text-xs text-faded hover:text-ink transition-colors underline underline-offset-2"
+        >
+          Archive {archive.length > 0 && `(${archive.length})`}
+        </button>
+      </div>
+
       {/* Error Display */}
       {error && (
         <div className="border-2 border-ink bg-paper p-4 text-center">
@@ -266,6 +346,14 @@ export default function Home() {
           {remainingCount} more in signal
         </motion.p>
       )}
+
+      {/* Archive Drawer */}
+      <ArchiveDrawer
+        isOpen={isArchiveOpen}
+        onClose={() => setIsArchiveOpen(false)}
+        items={archive}
+        onRequeue={handleRequeue}
+      />
     </div>
   )
 }

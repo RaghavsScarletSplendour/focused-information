@@ -37,3 +37,11 @@ export interface ArchitectState {
   isAnalyzing: boolean
   reasoning: string | null
 }
+
+export interface ArchiveItem {
+  id: string
+  header: string
+  summary: string
+  sourceUrl?: string | null
+  learnedAt: number
+}
