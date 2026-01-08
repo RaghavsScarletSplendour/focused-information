@@ -7,7 +7,9 @@ import FocusCard from '@/components/FocusCard'
 import ArchitectReasoning from '@/components/ArchitectReasoning'
 import ArchiveDrawer from '@/components/ArchiveDrawer'
 import AuthModal from '@/components/AuthModal'
+import ShareModal from '@/components/ShareModal'
 import { useAuth } from '@/context/AuthContext'
+import { ShareData } from '@/lib/share'
 import { useQueue } from '@/hooks/useQueue'
 import { useArchive } from '@/hooks/useArchive'
 import { QueueItem, ArchitectState, ArchitectResponse, ArchiveItem } from '@/types'
@@ -18,6 +20,8 @@ export default function Home() {
   const [isDumpExpanded, setIsDumpExpanded] = useState(false)
   const [isArchiveOpen, setIsArchiveOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false)
+  const [pendingShareData, setPendingShareData] = useState<ShareData | null>(null)
 
   const { user, isLoading: isAuthLoading, isConfigured: isAuthConfigured, signOut } = useAuth()
   const { queue, setQueue, isLoading: isQueueLoading, error: queueError, addItem, removeItem } = useQueue()
@@ -147,17 +151,30 @@ export default function Home() {
     const learnedItem = queue[0]
     if (!learnedItem) return
 
-    // Add to archive
+    const learnedAt = Date.now()
+
+    // Add to archive with createdAt preserved for share feature
     const archiveItem: ArchiveItem = {
       id: learnedItem.id,
       header: learnedItem.header,
       summary: learnedItem.summary,
       sourceUrl: learnedItem.sourceUrl,
-      learnedAt: Date.now(),
+      learnedAt,
+      createdAt: learnedItem.createdAt,
     }
 
     await addToArchive(archiveItem)
     await removeItem(learnedItem.id)
+
+    // Show share modal
+    setPendingShareData({
+      header: learnedItem.header,
+      summary: learnedItem.summary,
+      createdAt: learnedItem.createdAt,
+      learnedAt,
+      sourceUrl: learnedItem.sourceUrl,
+    })
+    setIsShareModalOpen(true)
 
     // Trigger architect analysis if more than 1 item remains
     const newQueue = queue.slice(1)
@@ -342,6 +359,13 @@ export default function Home() {
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
+      />
+
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        shareData={pendingShareData}
       />
     </div>
   )

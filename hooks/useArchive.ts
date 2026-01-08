@@ -15,6 +15,7 @@ interface DatabaseArchiveItem {
   summary: string
   source_url: string | null
   learned_at: string
+  created_at: string | null
 }
 
 // Convert database row to app format
@@ -25,11 +26,12 @@ function dbToApp(row: DatabaseArchiveItem): ArchiveItem {
     summary: row.summary,
     sourceUrl: row.source_url,
     learnedAt: new Date(row.learned_at).getTime(),
+    createdAt: row.created_at ? new Date(row.created_at).getTime() : undefined,
   }
 }
 
 // Convert app format to database insert
-function appToDb(item: ArchiveItem, userId: string): Omit<DatabaseArchiveItem, 'learned_at'> & { learned_at?: string } {
+function appToDb(item: ArchiveItem, userId: string): Omit<DatabaseArchiveItem, 'learned_at' | 'created_at'> & { learned_at?: string; created_at?: string | null } {
   return {
     id: item.id,
     user_id: userId,
@@ -37,6 +39,7 @@ function appToDb(item: ArchiveItem, userId: string): Omit<DatabaseArchiveItem, '
     summary: item.summary,
     source_url: item.sourceUrl ?? null,
     learned_at: new Date(item.learnedAt).toISOString(),
+    created_at: item.createdAt ? new Date(item.createdAt).toISOString() : null,
   }
 }
 

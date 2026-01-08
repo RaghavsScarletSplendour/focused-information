@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArchiveItem } from '@/types'
+import { shareToTwitter } from '@/lib/share'
 
 interface ArchiveDrawerProps {
   isOpen: boolean
@@ -36,6 +37,16 @@ export default function ArchiveDrawer({
   items,
   onRequeue,
 }: ArchiveDrawerProps) {
+  const handleShare = (item: ArchiveItem) => {
+    shareToTwitter({
+      header: item.header,
+      summary: item.summary,
+      createdAt: item.createdAt || item.learnedAt, // fallback for old items
+      learnedAt: item.learnedAt,
+      sourceUrl: item.sourceUrl,
+    })
+  }
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -91,12 +102,20 @@ export default function ArchiveDrawer({
                       <p className="text-xs text-faded mb-3">
                         {formatRelativeDate(item.learnedAt)}
                       </p>
-                      <button
-                        onClick={() => onRequeue(item)}
-                        className="text-xs text-faded hover:text-ink underline underline-offset-2 transition-colors"
-                      >
-                        Re-queue for review
-                      </button>
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => handleShare(item)}
+                          className="text-xs text-faded hover:text-ink underline underline-offset-2 transition-colors"
+                        >
+                          Share
+                        </button>
+                        <button
+                          onClick={() => onRequeue(item)}
+                          className="text-xs text-faded hover:text-ink underline underline-offset-2 transition-colors"
+                        >
+                          Re-queue
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>

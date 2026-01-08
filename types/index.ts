@@ -44,4 +44,5 @@ export interface ArchiveItem {
   summary: string
   sourceUrl?: string | null
   learnedAt: number
+  createdAt?: number
 }
