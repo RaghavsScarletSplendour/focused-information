@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { AuthProvider } from '@/context/AuthContext'
 
 export const metadata: Metadata = {
   title: 'Focus First | One Thing to Learn Today',
@@ -14,9 +15,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen flex items-center justify-center p-4">
-        <main className="w-full max-w-2xl">
-          {children}
-        </main>
+        <AuthProvider>
+          <main className="w-full max-w-2xl">
+            {children}
+          </main>
+        </AuthProvider>
       </body>
     </html>
   )
