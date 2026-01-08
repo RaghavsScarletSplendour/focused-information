@@ -22,14 +22,14 @@ export default function FocusCard({ item, onMarkLearned }: FocusCardProps) {
 
   return (
     <div
-      className={`border-2 border-ink bg-paper p-8 transition-all duration-300 ${
+      className={`border-2 border-ink bg-paper p-8 transition-all duration-300 rounded-lg ${
         isMarking ? 'opacity-0 translate-y-4' : ''
       }`}
     >
       {/* Complexity Badge */}
       {item.complexityScore && (
         <div className="mb-4">
-          <span className="inline-block px-2 py-1 text-xs border border-faded text-faded">
+          <span className="inline-block px-2 py-1 text-xs border border-faded text-faded rounded-md">
             {item.category || 'General'} | Level {item.complexityScore}/10
           </span>
         </div>

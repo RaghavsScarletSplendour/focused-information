@@ -28,7 +28,7 @@ export default function DumpForm({
     return (
       <button
         onClick={onToggle}
-        className="w-full border-2 border-ink bg-paper p-4 text-left text-faded hover:text-ink hover:bg-paper transition-colors"
+        className="w-full border-2 border-ink bg-paper p-4 text-left text-faded hover:text-ink hover:bg-paper transition-colors rounded-lg"
       >
         + Dump AI News/Links
       </button>
@@ -36,7 +36,7 @@ export default function DumpForm({
   }
 
   return (
-    <div className="border-2 border-ink bg-paper p-8">
+    <div className="border-2 border-ink bg-paper p-8 rounded-lg">
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Label */}
         <label htmlFor="dump-input" className="block text-sm text-faded">
@@ -52,7 +52,7 @@ export default function DumpForm({
           rows={4}
           disabled={isProcessing}
           autoFocus
-          className="w-full bg-transparent border-2 border-ink p-4 font-mono text-ink placeholder:text-faded resize-none focus:outline-none disabled:opacity-50"
+          className="w-full bg-transparent border-2 border-ink p-4 font-mono text-ink placeholder:text-faded resize-none focus:outline-none disabled:opacity-50 rounded-lg"
         />
 
         {/* Actions */}

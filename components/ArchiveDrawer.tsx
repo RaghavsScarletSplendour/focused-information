@@ -83,7 +83,7 @@ export default function ArchiveDrawer({
                   {items.map((item) => (
                     <div
                       key={item.id}
-                      className="border-2 border-ink bg-paper p-4"
+                      className="border-2 border-ink bg-paper p-4 rounded-lg"
                     >
                       <h3 className="font-semibold text-sm leading-tight mb-2">
                         {item.header}

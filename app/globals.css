@@ -17,7 +17,7 @@
 @layer components {
   .btn-process {
     @apply inline-flex items-center justify-center;
-    @apply px-6 py-3 border-2 border-ink bg-ink text-paper;
+    @apply px-6 py-3 border-2 border-ink bg-ink text-paper rounded-lg;
     @apply font-mono font-semibold uppercase tracking-wider text-sm;
     @apply hover:bg-paper hover:text-ink;
     @apply focus:outline-none focus:ring-2 focus:ring-ink focus:ring-offset-2 focus:ring-offset-paper;
@@ -27,7 +27,7 @@
 
   .btn-learned {
     @apply inline-flex items-center justify-center;
-    @apply px-6 py-3 border-2 border-ink bg-paper text-ink;
+    @apply px-6 py-3 border-2 border-ink bg-paper text-ink rounded-lg;
     @apply font-mono font-semibold uppercase tracking-wider text-sm;
     @apply hover:bg-ink hover:text-paper;
     @apply focus:outline-none focus:ring-2 focus:ring-ink focus:ring-offset-2 focus:ring-offset-paper;

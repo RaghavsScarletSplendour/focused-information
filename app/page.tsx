@@ -276,7 +276,7 @@ export default function Home() {
 
       {/* Error Display */}
       {error && (
-        <div className="border-2 border-ink bg-paper p-4 text-center">
+        <div className="border-2 border-ink bg-paper p-4 text-center rounded-lg">
           <p className="text-sm text-ink">{error}</p>
           <button
             onClick={() => setError(null)}
@@ -328,7 +328,7 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="border-2 border-ink bg-paper p-8 text-center"
+            className="border-2 border-ink bg-paper p-8 text-center rounded-lg"
           >
             <p className="text-faded">All clear. Stay focused.</p>
           </motion.div>
