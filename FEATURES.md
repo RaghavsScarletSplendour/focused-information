@@ -127,4 +127,50 @@ interface UserPreferences {
 
 ---
 
+## Feature 4: Delete Card (Permanent Removal)
+
+**Status:** Proposed
+
+### Overview
+
+A delete icon on each card that permanently removes the item without sending it to the archive. This is for content you realize isn't worth learning—spam, duplicates, or irrelevant items.
+
+### Why It's Worth It
+
+Not everything you queue deserves your attention. Sometimes you dump a link that turns out to be clickbait, or you accidentally queue the same thing twice. Users need a quick way to discard without polluting their archive with junk.
+
+### Technical Approach
+
+**UI - Queue Cards:**
+- Small trash/X icon in the top-right corner of FocusCard
+- Click triggers confirmation (optional) then permanent deletion
+- Card animates out similar to "Mark as Learned"
+
+**UI - Archive Items:**
+- Same trash icon on archive drawer items
+- Removes item from archive permanently
+
+**Behavior:**
+- Does NOT add to archive (unlike "Mark as Learned")
+- Deletes from Supabase if logged in, localStorage if not
+- No undo (or optional 5-second undo toast)
+
+**Components to Modify:**
+- `components/FocusCard.tsx` - Add delete icon and handler
+- `components/ArchiveDrawer.tsx` - Add delete icon to archive items
+- `hooks/useQueue.ts` - Already has `removeItem` function
+- `hooks/useArchive.ts` - Already has `removeFromArchive` function
+
+**Icon Options:**
+- Trash icon (permanent deletion semantics)
+- X icon (simpler, less alarming)
+
+### Open Questions
+
+- [ ] Require confirmation before delete, or instant with undo toast?
+- [ ] Should delete icon be always visible or appear on hover?
+- [ ] Different icon for queue vs archive deletion?
+
+---
+
 *Add new features below this line.*

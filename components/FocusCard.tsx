@@ -6,10 +6,13 @@ import { QueueItem } from '@/types'
 interface FocusCardProps {
   item: QueueItem
   onMarkLearned: () => void
+  onDelete: () => void
 }
 
-export default function FocusCard({ item, onMarkLearned }: FocusCardProps) {
+export default function FocusCard({ item, onMarkLearned, onDelete }: FocusCardProps) {
   const [isMarking, setIsMarking] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const handleMarkLearned = () => {
     setIsMarking(true)
@@ -18,12 +21,27 @@ export default function FocusCard({ item, onMarkLearned }: FocusCardProps) {
     }, 300)
   }
 
+  const handleDeleteClick = () => {
+    setShowDeleteConfirm(true)
+  }
+
+  const handleConfirmDelete = () => {
+    setIsDeleting(true)
+    setTimeout(() => {
+      onDelete()
+    }, 300)
+  }
+
+  const handleCancelDelete = () => {
+    setShowDeleteConfirm(false)
+  }
+
   const summaryLines = item.summary.split('\n')
 
   return (
     <div
       className={`border-2 border-ink bg-paper p-8 transition-all duration-300 rounded-lg ${
-        isMarking ? 'opacity-0 translate-y-4' : ''
+        (isMarking || isDeleting) ? 'opacity-0 translate-y-4' : ''
       }`}
     >
       {/* Complexity Badge */}
@@ -64,13 +82,43 @@ export default function FocusCard({ item, onMarkLearned }: FocusCardProps) {
       )}
 
       {/* Action */}
-      <div className="pt-6 flex justify-center">
-        <button
-          onClick={handleMarkLearned}
-          className="btn-learned"
-        >
-          Mark as Learned
-        </button>
+      <div className="pt-6">
+        {showDeleteConfirm ? (
+          <div className="flex flex-col items-center gap-3">
+            <span className="text-faded text-sm">Delete this item?</span>
+            <div className="flex gap-3">
+              <button
+                onClick={handleCancelDelete}
+                className="px-4 py-3 border-2 border-faded text-faded rounded-lg font-mono font-semibold uppercase tracking-wider text-sm hover:border-ink hover:text-ink transition-all duration-200"
+              >
+                No
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="px-4 py-3 border-2 border-ink bg-ink text-paper rounded-lg font-mono font-semibold uppercase tracking-wider text-sm hover:bg-transparent hover:text-ink transition-all duration-200"
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex justify-center gap-3">
+            <button
+              onClick={handleDeleteClick}
+              className="px-4 py-3 border-2 border-faded text-faded rounded-lg font-mono text-xl font-semibold hover:border-ink hover:text-ink transition-all duration-200"
+              title="Remove from queue"
+              aria-label="Delete this item"
+            >
+              &times;
+            </button>
+            <button
+              onClick={handleMarkLearned}
+              className="btn-learned"
+            >
+              Mark as Learned
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

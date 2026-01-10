@@ -185,6 +185,22 @@ export default function Home() {
     }
   }, [queue, addToArchive, removeItem, scheduleArchitectAnalysis])
 
+  const handleDelete = useCallback(async () => {
+    const currentItem = queue[0]
+    if (!currentItem) return
+
+    // Simply remove from queue - no archive, no share modal
+    await removeItem(currentItem.id)
+
+    // Trigger architect analysis if more than 1 item remains
+    const newQueue = queue.slice(1)
+    if (newQueue.length > 1) {
+      setTimeout(() => {
+        scheduleArchitectAnalysis(newQueue, 'item_learned')
+      }, 300) // After exit animation
+    }
+  }, [queue, removeItem, scheduleArchitectAnalysis])
+
   const handleRequeue = useCallback(async (item: ArchiveItem) => {
     // Remove from archive
     await removeFromArchive(item.id)
@@ -320,7 +336,7 @@ export default function Home() {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <FocusCard item={currentItem} onMarkLearned={handleMarkLearned} />
+            <FocusCard item={currentItem} onMarkLearned={handleMarkLearned} onDelete={handleDelete} />
           </motion.div>
         ) : (
           <motion.div
