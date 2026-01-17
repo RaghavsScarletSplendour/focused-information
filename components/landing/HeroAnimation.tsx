@@ -1,18 +1,20 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import Link from 'next/link'
 import LensCanvas from './LensCanvas'
+import RevealCard from './RevealCard'
 
 export default function HeroAnimation() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
-  const [isRevealed, setIsRevealed] = useState(false)
   const [isTouchDevice, setIsTouchDevice] = useState(false)
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
   const [showStaticCard, setShowStaticCard] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const autoAnimationRef = useRef<number>()
+
+  const lensRadius = 150
 
   // Detect touch device and reduced motion preference
   useEffect(() => {
@@ -37,7 +39,7 @@ export default function HeroAnimation() {
     return () => mediaQuery.removeEventListener('change', handleChange)
   }, [])
 
-  // Auto-animation for touch devices
+  // Auto-animation for touch devices - smooth circular motion
   useEffect(() => {
     if (!isTouchDevice || prefersReducedMotion) return
 
@@ -49,19 +51,10 @@ export default function HeroAnimation() {
     const centerY = rect.height / 2
 
     let angle = 0
-    let radius = 100
-    let expanding = true
+    const radius = 80
 
     const autoAnimate = () => {
-      // Create a spiral motion toward center
-      angle += 0.03
-      if (expanding) {
-        radius -= 0.5
-        if (radius <= 0) {
-          setIsRevealed(true)
-          return
-        }
-      }
+      angle += 0.02
 
       const x = centerX + Math.cos(angle) * radius
       const y = centerY + Math.sin(angle) * radius
@@ -72,8 +65,10 @@ export default function HeroAnimation() {
 
     // Start auto-animation after a short delay
     const timeout = setTimeout(() => {
+      // Set initial position to center
+      setMousePos({ x: centerX, y: centerY })
       autoAnimationRef.current = requestAnimationFrame(autoAnimate)
-    }, 1000)
+    }, 500)
 
     return () => {
       clearTimeout(timeout)
@@ -85,7 +80,7 @@ export default function HeroAnimation() {
 
   // Mouse tracking for desktop
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (isTouchDevice || isRevealed) return
+    if (isTouchDevice) return
 
     const container = containerRef.current
     if (!container) return
@@ -95,17 +90,14 @@ export default function HeroAnimation() {
       x: e.clientX - rect.left,
       y: e.clientY - rect.top,
     })
-  }, [isTouchDevice, isRevealed])
+  }, [isTouchDevice])
 
-  // Handle tap to skip on mobile
+  // Handle tap to skip animation on mobile
   const handleTap = useCallback(() => {
-    if (isTouchDevice && !isRevealed) {
-      if (autoAnimationRef.current) {
-        cancelAnimationFrame(autoAnimationRef.current)
-      }
-      setIsRevealed(true)
+    if (isTouchDevice) {
+      setShowStaticCard(true)
     }
-  }, [isTouchDevice, isRevealed])
+  }, [isTouchDevice])
 
   // Show static card for reduced motion
   if (prefersReducedMotion || showStaticCard) {
@@ -120,17 +112,12 @@ export default function HeroAnimation() {
 
           <p className="font-sans text-lg text-faded max-w-xl mx-auto">
             Focus First transforms overwhelming AI news into a single, digestible
-            learning card. Paste any link, and we'll distill it to what matters.
+            learning card. Paste any link, and we&apos;ll distill it to what matters.
           </p>
 
           {/* Static card preview */}
-          <div className="border-2 border-ink bg-paper rounded-lg p-6 shadow-card max-w-md mx-auto font-mono text-left">
-            <div className="text-xs text-faded mb-4">complexity: beginner</div>
-            <h3 className="text-lg font-semibold mb-2">Learn AI Concepts</h3>
-            <p className="text-sm text-faded mb-4">
-              Understand how large language models work...
-            </p>
-            <div className="btn-process text-center">Mark as Learned</div>
+          <div className="flex justify-center">
+            <RevealCard />
           </div>
 
           <Link
@@ -151,68 +138,28 @@ export default function HeroAnimation() {
       onMouseMove={handleMouseMove}
       onClick={handleTap}
     >
+      {/* Layer 1: Hidden Card revealed via clip-path (z-0) */}
+      <div
+        className="absolute inset-0 flex items-center justify-center z-0 px-4"
+        style={{
+          clipPath: mousePos.x > 0 && mousePos.y > 0
+            ? `circle(${lensRadius}px at ${mousePos.x}px ${mousePos.y}px)`
+            : 'circle(0px at 50% 50%)',
+          transition: 'clip-path 0.05s ease-out',
+        }}
+      >
+        <RevealCard />
+      </div>
+
+      {/* Layer 2: Noise Canvas (z-10) */}
       <LensCanvas
         mouseX={mousePos.x}
         mouseY={mousePos.y}
-        isRevealed={isRevealed}
-        lensRadius={150}
-        onRevealComplete={() => setShowStaticCard(true)}
+        lensRadius={lensRadius}
       />
 
-      {/* Content overlay */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-        <AnimatePresence>
-          {!isRevealed && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="text-center space-y-4 px-4"
-            >
-              <h1 className="font-mono text-2xl md:text-3xl font-bold text-ink">
-                {isTouchDevice ? 'Tap to reveal clarity' : 'Move to reveal clarity'}
-              </h1>
-              <p className="font-sans text-sm text-faded">
-                {isTouchDevice
-                  ? 'Watch as chaos becomes understanding'
-                  : 'Hover over the noise to find focus'
-                }
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {isRevealed && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="text-center space-y-8 pointer-events-auto px-4"
-            >
-              <div className="space-y-4">
-                <h1 className="font-mono text-3xl md:text-4xl font-bold text-ink">
-                  Focus First
-                </h1>
-                <p className="font-sans text-lg text-faded max-w-md mx-auto">
-                  Cut through the AI hype. Learn one thing at a time.
-                </p>
-              </div>
-
-              <Link
-                href="/app"
-                className="btn-process inline-block"
-              >
-                Get Started
-              </Link>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
       {/* Custom cursor indicator for desktop */}
-      {!isTouchDevice && !isRevealed && mousePos.x > 0 && (
+      {!isTouchDevice && mousePos.x > 0 && (
         <motion.div
           className="fixed w-4 h-4 rounded-full border-2 border-ink pointer-events-none z-50"
           style={{
@@ -225,15 +172,17 @@ export default function HeroAnimation() {
         />
       )}
 
-      {/* Scroll indicator */}
+      {/* Instruction hint */}
       <motion.div
         initial={{ opacity: 0 }}
-        animate={{ opacity: isRevealed ? 1 : 0 }}
-        transition={{ delay: 1 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2"
+        animate={{ opacity: 1 }}
+        transition={{ delay: 2 }}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20"
       >
         <div className="flex flex-col items-center gap-2 text-faded">
-          <span className="text-xs font-mono">Scroll to learn more</span>
+          <span className="text-xs font-mono">
+            {isTouchDevice ? 'Tap to continue' : 'Move cursor to reveal'}
+          </span>
           <motion.div
             animate={{ y: [0, 8, 0] }}
             transition={{ repeat: Infinity, duration: 1.5 }}
