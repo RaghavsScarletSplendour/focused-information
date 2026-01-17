@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { QueueItem, ArchitectRequest, ArchitectResponse } from '@/types'
+import { createClient } from '@/lib/supabase/server'
+import { checkProFeature } from '@/lib/subscription'
 
 const ARCHITECT_SYSTEM_PROMPT = `You are a curriculum architect for a focused learning system. Analyze a queue of learning items and determine the optimal order for understanding.
 
@@ -61,6 +63,23 @@ export async function POST(request: NextRequest) {
         { error: 'Queue is required and must not be empty' },
         { status: 400 }
       )
+    }
+
+    // Check if user has pro access for Architect feature
+    const supabase = await createClient()
+    const user = supabase ? (await supabase.auth.getUser()).data.user : null
+
+    if (user) {
+      const hasAccess = await checkProFeature(user.id, 'architect')
+      if (!hasAccess) {
+        return NextResponse.json(
+          {
+            error: 'Pro subscription required',
+            code: 'PRO_REQUIRED',
+          },
+          { status: 403 }
+        )
+      }
     }
 
     // Skip analysis for single-item queues

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
+import { createClient } from '@/lib/supabase/server'
+import { checkUsageLimit, incrementUsage } from '@/lib/subscription'
 
 interface SummarizeRequest {
   input: string
@@ -167,6 +169,24 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check usage limit for authenticated users
+    const supabase = await createClient()
+    const user = supabase ? (await supabase.auth.getUser()).data.user : null
+
+    if (user) {
+      const usageStatus = await checkUsageLimit(user.id, 'summarize')
+      if (!usageStatus.allowed) {
+        return NextResponse.json(
+          {
+            error: 'Daily limit reached',
+            code: 'LIMIT_REACHED',
+            usage: usageStatus,
+          },
+          { status: 403 }
+        )
+      }
+    }
+
     const apiKey = process.env.OPENAI_API_KEY
 
     if (!apiKey) {
@@ -215,6 +235,11 @@ export async function POST(request: NextRequest) {
       header: parsed.header || 'Unknown Topic',
       summary: parsed.summary || 'Unable to extract summary.',
       sourceUrl
+    }
+
+    // Increment usage for authenticated users
+    if (user) {
+      await incrementUsage(user.id, 'summarize')
     }
 
     return NextResponse.json(response)
