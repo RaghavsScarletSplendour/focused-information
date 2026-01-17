@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/'
+  const next = searchParams.get('next') ?? '/app'
 
   if (code) {
     const supabase = await createClient()
@@ -16,6 +16,6 @@ export async function GET(request: Request) {
     }
   }
 
-  // Return the user to home page
-  return NextResponse.redirect(`${origin}/`)
+  // Return the user to app page
+  return NextResponse.redirect(`${origin}/app`)
 }
