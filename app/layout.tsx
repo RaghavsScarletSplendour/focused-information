@@ -14,9 +14,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen flex items-center justify-center p-4">
+      <body className="min-h-screen">
         <AuthProvider>
-          <main className="w-full max-w-2xl">
+          <main className="w-full">
             {children}
           </main>
         </AuthProvider>

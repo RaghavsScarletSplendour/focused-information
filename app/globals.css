@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -32,5 +32,13 @@
     @apply hover:bg-ink hover:text-paper;
     @apply focus:outline-none focus:ring-2 focus:ring-ink focus:ring-offset-2 focus:ring-offset-paper;
     @apply transition-all duration-200;
+  }
+
+  .lens-cursor {
+    cursor: none;
+  }
+
+  .lens-cursor canvas {
+    cursor: none;
   }
 }

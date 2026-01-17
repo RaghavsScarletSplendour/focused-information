@@ -10,9 +10,10 @@ const config: Config = {
     extend: {
       fontFamily: {
         mono: ['"IBM Plex Mono"', '"Courier New"', 'Courier', 'monospace'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
       },
       colors: {
-        paper: '#f5f2e9',
+        paper: '#F3F0E9',
         ink: '#1a1a1a',
         faded: '#6b6b6b',
         accent: '#2d2d2d',

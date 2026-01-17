@@ -267,7 +267,8 @@ export default function Home() {
   const remainingCount = queue.length - 1
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="w-full max-w-2xl space-y-6">
       {/* Header with Auth, Usage, and Archive */}
       <div className="flex justify-between items-center">
         {/* Auth Controls - only show when Supabase is configured */}
@@ -425,6 +426,7 @@ export default function Home() {
           items: { used: 0, limit: 3 }, // Items usage can be added later
         }}
       />
+      </div>
     </div>
   )
 }
