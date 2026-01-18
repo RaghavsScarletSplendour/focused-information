@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, type RefObject } from 'react'
 
 interface Particle {
   x: number
@@ -14,8 +14,7 @@ interface Particle {
 }
 
 interface LensCanvasProps {
-  mouseX: number
-  mouseY: number
+  mousePosRef: RefObject<{ x: number; y: number }>
   lensRadius?: number
 }
 
@@ -29,8 +28,7 @@ const ASCII_WORDS = [
 ]
 
 export default function LensCanvas({
-  mouseX,
-  mouseY,
+  mousePosRef,
   lensRadius = 150,
 }: LensCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -66,7 +64,7 @@ export default function LensCanvas({
     particlesRef.current = particles
   }, [])
 
-  // Animation loop
+  // Animation loop - reads from ref for zero-latency updates
   const animate = useCallback(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -77,6 +75,10 @@ export default function LensCanvas({
     const dpr = window.devicePixelRatio || 1
     const width = canvas.width / dpr
     const height = canvas.height / dpr
+
+    // Read mouse position from ref (updated directly in parent, no React render needed)
+    const mouseX = mousePosRef.current?.x ?? 0
+    const mouseY = mousePosRef.current?.y ?? 0
 
     // Clear canvas with transparency
     ctx.clearRect(0, 0, width, height)
@@ -134,7 +136,7 @@ export default function LensCanvas({
     }
 
     animationRef.current = requestAnimationFrame(animate)
-  }, [mouseX, mouseY, lensRadius])
+  }, [mousePosRef, lensRadius])
 
   // Handle resize
   useEffect(() => {

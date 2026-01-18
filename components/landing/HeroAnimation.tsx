@@ -7,11 +7,14 @@ import LensCanvas from './LensCanvas'
 import RevealCard from './RevealCard'
 
 export default function HeroAnimation() {
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
   const [isTouchDevice, setIsTouchDevice] = useState(false)
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
   const [showStaticCard, setShowStaticCard] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const clipContainerRef = useRef<HTMLDivElement>(null)
+  const cursorRef = useRef<HTMLDivElement>(null)
+  const mousePosRef = useRef({ x: 0, y: 0 })
+  const [hasMouseMoved, setHasMouseMoved] = useState(false)
   const autoAnimationRef = useRef<number>()
 
   const lensRadius = 75
@@ -59,14 +62,26 @@ export default function HeroAnimation() {
       const x = centerX + Math.cos(angle) * radius
       const y = centerY + Math.sin(angle) * radius
 
-      setMousePos({ x, y })
+      // Update ref (for LensCanvas)
+      mousePosRef.current = { x, y }
+
+      // Update CSS variables directly (for clip-path)
+      if (clipContainerRef.current) {
+        clipContainerRef.current.style.setProperty('--mx', `${x}px`)
+        clipContainerRef.current.style.setProperty('--my', `${y}px`)
+      }
+
       autoAnimationRef.current = requestAnimationFrame(autoAnimate)
     }
 
     // Start auto-animation after a short delay
     const timeout = setTimeout(() => {
       // Set initial position to center
-      setMousePos({ x: centerX, y: centerY })
+      mousePosRef.current = { x: centerX, y: centerY }
+      if (clipContainerRef.current) {
+        clipContainerRef.current.style.setProperty('--mx', `${centerX}px`)
+        clipContainerRef.current.style.setProperty('--my', `${centerY}px`)
+      }
       autoAnimationRef.current = requestAnimationFrame(autoAnimate)
     }, 500)
 
@@ -86,11 +101,29 @@ export default function HeroAnimation() {
     if (!container) return
 
     const rect = container.getBoundingClientRect()
-    setMousePos({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    })
-  }, [isTouchDevice])
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+
+    // Update ref (for LensCanvas)
+    mousePosRef.current = { x, y }
+
+    // Update CSS variables directly (for clip-path) - no React render needed
+    if (clipContainerRef.current) {
+      clipContainerRef.current.style.setProperty('--mx', `${x}px`)
+      clipContainerRef.current.style.setProperty('--my', `${y}px`)
+    }
+
+    // Update cursor position directly
+    if (cursorRef.current) {
+      cursorRef.current.style.left = `${x - 8}px`
+      cursorRef.current.style.top = `${y - 8}px`
+    }
+
+    // Show cursor on first movement (only state update needed once)
+    if (!hasMouseMoved) {
+      setHasMouseMoved(true)
+    }
+  }, [isTouchDevice, hasMouseMoved])
 
   // Handle tap to skip animation on mobile
   const handleTap = useCallback(() => {
@@ -140,32 +173,28 @@ export default function HeroAnimation() {
     >
       {/* Layer 1: Hidden Card revealed via clip-path (z-0) */}
       <div
+        ref={clipContainerRef}
         className="absolute inset-0 flex items-center justify-center z-0 px-4"
         style={{
-          clipPath: mousePos.x > 0 && mousePos.y > 0
-            ? `circle(${lensRadius}px at ${mousePos.x}px ${mousePos.y}px)`
-            : 'circle(0px at 50% 50%)',
-          transition: 'clip-path 0.05s ease-out',
-        }}
+          '--mx': '50%',
+          '--my': '50%',
+          clipPath: `circle(${lensRadius}px at var(--mx) var(--my))`,
+        } as React.CSSProperties}
       >
         <RevealCard />
       </div>
 
       {/* Layer 2: Noise Canvas (z-10) */}
       <LensCanvas
-        mouseX={mousePos.x}
-        mouseY={mousePos.y}
+        mousePosRef={mousePosRef}
         lensRadius={lensRadius}
       />
 
       {/* Custom cursor indicator for desktop */}
-      {!isTouchDevice && mousePos.x > 0 && (
+      {!isTouchDevice && hasMouseMoved && (
         <motion.div
-          className="fixed w-4 h-4 rounded-full border-2 border-ink pointer-events-none z-50"
-          style={{
-            left: mousePos.x - 8,
-            top: mousePos.y - 8,
-          }}
+          ref={cursorRef}
+          className="absolute w-4 h-4 rounded-full border-2 border-ink pointer-events-none z-50"
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ duration: 0.2 }}
