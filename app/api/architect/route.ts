@@ -4,6 +4,8 @@ import { QueueItem, ArchitectRequest, ArchitectResponse } from '@/types'
 import { createClient } from '@/lib/supabase/server'
 import { checkProFeature } from '@/lib/subscription'
 
+export const dynamic = 'force-dynamic'
+
 const ARCHITECT_SYSTEM_PROMPT = `You are a curriculum architect for a focused learning system. Analyze a queue of learning items and determine the optimal order for understanding.
 
 PRINCIPLES:

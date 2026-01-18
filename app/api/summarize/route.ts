@@ -3,6 +3,8 @@ import OpenAI from 'openai'
 import { createClient } from '@/lib/supabase/server'
 import { checkUsageLimit, incrementUsage } from '@/lib/subscription'
 
+export const dynamic = 'force-dynamic'
+
 interface SummarizeRequest {
   input: string
 }
