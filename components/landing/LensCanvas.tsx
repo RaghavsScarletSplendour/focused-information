@@ -109,6 +109,13 @@ export default function LensCanvas({
         particle.x += (particle.baseX - particle.x) * 0.002
         particle.y += (particle.baseY - particle.y) * 0.002
 
+        // Randomly flip velocity direction to prevent equilibrium
+        // ~0.8% chance per frame = direction change every ~2 seconds at 60fps
+        if (Math.random() < 0.008) {
+          if (Math.random() < 0.5) particle.velocity.x *= -1
+          if (Math.random() < 0.5) particle.velocity.y *= -1
+        }
+
         // Bounce off edges
         if (particle.x < 0 || particle.x > width) {
           particle.velocity.x *= -1
