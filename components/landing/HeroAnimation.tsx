@@ -14,7 +14,7 @@ export default function HeroAnimation() {
   const containerRef = useRef<HTMLDivElement>(null)
   const autoAnimationRef = useRef<number>()
 
-  const lensRadius = 150
+  const lensRadius = 75
 
   // Detect touch device and reduced motion preference
   useEffect(() => {
