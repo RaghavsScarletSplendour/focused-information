@@ -17,7 +17,7 @@ export default function HeroAnimation() {
   const [hasMouseMoved, setHasMouseMoved] = useState(false)
   const autoAnimationRef = useRef<number>()
 
-  const lensRadius = 75
+  const lensRadius = 79
 
   // Detect touch device and reduced motion preference
   useEffect(() => {
