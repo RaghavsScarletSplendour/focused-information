@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { QueueItem } from '@/types'
+import { isTutorialCard, getTutorialCardCount } from '@/lib/tutorial'
 
 interface FocusCardProps {
   item: QueueItem
@@ -37,15 +38,22 @@ export default function FocusCard({ item, onMarkLearned, onDelete }: FocusCardPr
   }
 
   const summaryLines = item.summary.split('\n')
+  const isTutorial = isTutorialCard(item)
 
   return (
     <div
-      className={`border-2 border-ink bg-paper p-8 transition-all duration-300 rounded-lg ${
-        (isMarking || isDeleting) ? 'opacity-0 translate-y-4' : ''
-      }`}
+      className={`border-2 bg-paper p-8 transition-all duration-300 rounded-lg ${
+        isTutorial ? 'border-dashed border-faded' : 'border-ink'
+      } ${(isMarking || isDeleting) ? 'opacity-0 translate-y-4' : ''}`}
     >
-      {/* Complexity Badge */}
-      {item.complexityScore && (
+      {/* Tutorial Badge or Complexity Badge */}
+      {isTutorial ? (
+        <div className="mb-4">
+          <span className="inline-block px-2 py-1 text-xs border border-faded text-faded rounded-md">
+            Tutorial {item.tutorialStep}/{getTutorialCardCount()}
+          </span>
+        </div>
+      ) : item.complexityScore && (
         <div className="mb-4">
           <span className="inline-block px-2 py-1 text-xs border border-faded text-faded rounded-md">
             {item.category || 'General'} | Level {item.complexityScore}/10
@@ -103,14 +111,17 @@ export default function FocusCard({ item, onMarkLearned, onDelete }: FocusCardPr
           </div>
         ) : (
           <div className="flex justify-center gap-3">
-            <button
-              onClick={handleDeleteClick}
-              className="px-4 py-3 border-2 border-faded text-faded rounded-lg font-mono text-xl font-semibold hover:border-ink hover:text-ink transition-all duration-200"
-              title="Remove from queue"
-              aria-label="Delete this item"
-            >
-              &times;
-            </button>
+            {/* Hide delete button for tutorial cards */}
+            {!isTutorial && (
+              <button
+                onClick={handleDeleteClick}
+                className="px-4 py-3 border-2 border-faded text-faded rounded-lg font-mono text-xl font-semibold hover:border-ink hover:text-ink transition-all duration-200"
+                title="Remove from queue"
+                aria-label="Delete this item"
+              >
+                &times;
+              </button>
+            )}
             <button
               onClick={handleMarkLearned}
               className="btn-learned"

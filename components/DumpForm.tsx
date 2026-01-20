@@ -7,6 +7,7 @@ interface DumpFormProps {
   isProcessing: boolean
   isCollapsed: boolean
   onToggle: () => void
+  isHighlighted?: boolean
 }
 
 export default function DumpForm({
@@ -14,6 +15,7 @@ export default function DumpForm({
   isProcessing,
   isCollapsed,
   onToggle,
+  isHighlighted = false,
 }: DumpFormProps) {
   const [input, setInput] = useState('')
 
@@ -24,7 +26,10 @@ export default function DumpForm({
     setInput('')
   }
 
-  if (isCollapsed) {
+  // Force expanded when highlighted (tutorial card 3)
+  const shouldExpand = isHighlighted || !isCollapsed
+
+  if (!shouldExpand) {
     return (
       <button
         onClick={onToggle}
@@ -36,7 +41,11 @@ export default function DumpForm({
   }
 
   return (
-    <div className="border-2 border-ink bg-paper p-8 rounded-lg">
+    <div className={`border-2 bg-paper p-8 rounded-lg ${
+      isHighlighted
+        ? 'border-ink animate-pulse ring-2 ring-ink ring-offset-2 ring-offset-paper'
+        : 'border-ink'
+    }`}>
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Label */}
         <label htmlFor="dump-input" className="block text-sm text-faded">

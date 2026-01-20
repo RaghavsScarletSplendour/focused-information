@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import { QueueItem } from '@/types'
+import { shouldSeedTutorial, createTutorialCards, isTutorialCard } from '@/lib/tutorial'
 
 const STORAGE_KEY = 'signal_queue'
 
@@ -94,7 +95,22 @@ export function useQueue() {
         if (stored) {
           const parsed = JSON.parse(stored)
           if (Array.isArray(parsed)) {
-            setQueue(parsed.filter((item: QueueItem) => item.status === 'queued'))
+            const queuedItems = parsed.filter((item: QueueItem) => item.status === 'queued')
+            setQueue(queuedItems)
+
+            // Check if we should seed tutorial cards (no items and tutorial not started/completed)
+            if (queuedItems.length === 0 && shouldSeedTutorial(true)) {
+              const tutorialCards = createTutorialCards()
+              setQueue(tutorialCards)
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(tutorialCards))
+            }
+          }
+        } else {
+          // No stored queue - check if we should seed tutorial cards
+          if (shouldSeedTutorial(true)) {
+            const tutorialCards = createTutorialCards()
+            setQueue(tutorialCards)
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(tutorialCards))
           }
         }
       } catch (e) {
@@ -131,7 +147,7 @@ export function useQueue() {
       if (!supabase) return
 
       const itemsToMigrate = parsed
-        .filter((item: QueueItem) => item.status === 'queued')
+        .filter((item: QueueItem) => item.status === 'queued' && !isTutorialCard(item))
         .map((item: QueueItem) => appToDb(item, user.id))
 
       if (itemsToMigrate.length > 0) {

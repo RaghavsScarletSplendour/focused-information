@@ -15,6 +15,7 @@ import { ShareData } from '@/lib/share'
 import { useQueue } from '@/hooks/useQueue'
 import { useArchive } from '@/hooks/useArchive'
 import { useSubscription } from '@/hooks/useSubscription'
+import { isTutorialCard, markTutorialCompleted, getTutorialCardCount } from '@/lib/tutorial'
 import { QueueItem, ArchitectState, ArchitectResponse, ArchiveItem } from '@/types'
 
 export default function Home() {
@@ -165,6 +166,21 @@ export default function Home() {
   const handleMarkLearned = useCallback(async () => {
     const learnedItem = queue[0]
     if (!learnedItem) return
+
+    // Handle tutorial cards differently
+    if (isTutorialCard(learnedItem)) {
+      // Simply remove from queue - no archive, no share modal
+      await removeItem(learnedItem.id)
+
+      // If this was the last tutorial card (step 3), mark tutorial as completed
+      if (learnedItem.tutorialStep === getTutorialCardCount()) {
+        markTutorialCompleted()
+      }
+
+      // Don't trigger architect for tutorial cards 1 and 2
+      // Card 3 completion already happened after user added content
+      return
+    }
 
     const learnedAt = Date.now()
 
@@ -339,6 +355,7 @@ export default function Home() {
           isProcessing={isProcessing}
           isCollapsed={!isDumpExpanded}
           onToggle={toggleDump}
+          isHighlighted={currentItem?.isTutorial && currentItem?.tutorialStep === 3}
         />
       ) : (
         <DumpForm

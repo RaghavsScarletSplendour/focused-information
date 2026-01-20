@@ -10,6 +10,9 @@ export interface QueueItem {
   category?: string
   complexityScore?: number
   sequenceOrder?: number
+  // Tutorial fields
+  isTutorial?: boolean
+  tutorialStep?: number // 1, 2, or 3
 }
 
 export interface ArchitectRequest {
