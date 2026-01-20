@@ -188,7 +188,7 @@ export default function LensCanvas({
     <canvas
       ref={canvasRef}
       className="absolute inset-0 w-full h-full z-10"
-      style={{ touchAction: 'none' }}
+      style={{ touchAction: 'none', pointerEvents: 'none' }}
     />
   )
 }
