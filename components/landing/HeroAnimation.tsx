@@ -209,9 +209,6 @@ export default function HeroAnimation() {
         className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20"
       >
         <div className="flex flex-col items-center gap-2 text-faded">
-          <span className="text-xs font-mono">
-            {isTouchDevice ? 'Tap to continue' : 'Move cursor to reveal'}
-          </span>
           <motion.div
             animate={{ y: [0, 8, 0] }}
             transition={{ repeat: Infinity, duration: 1.5 }}
