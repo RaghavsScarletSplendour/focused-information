@@ -197,15 +197,18 @@ export default function Home() {
     await addToArchive(archiveItem)
     await removeItem(learnedItem.id)
 
-    // Show share modal
-    setPendingShareData({
-      header: learnedItem.header,
-      summary: learnedItem.summary,
-      createdAt: learnedItem.createdAt,
-      learnedAt,
-      sourceUrl: learnedItem.sourceUrl,
-    })
-    setIsShareModalOpen(true)
+    // Show share modal every 10 items learned
+    const newArchiveCount = archive.length + 1
+    if (newArchiveCount % 10 === 0) {
+      setPendingShareData({
+        header: learnedItem.header,
+        summary: learnedItem.summary,
+        createdAt: learnedItem.createdAt,
+        learnedAt,
+        sourceUrl: learnedItem.sourceUrl,
+      })
+      setIsShareModalOpen(true)
+    }
 
     // Trigger architect analysis if more than 1 item remains
     const newQueue = queue.slice(1)
