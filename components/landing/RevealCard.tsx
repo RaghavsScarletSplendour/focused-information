@@ -1,5 +1,7 @@
 'use client'
 
+import Link from 'next/link'
+
 export default function RevealCard() {
   return (
     <div className="border-2 border-ink bg-paper rounded-lg p-6 shadow-card max-w-md w-full">
@@ -24,9 +26,9 @@ export default function RevealCard() {
 
       {/* Action Button */}
       <div className="flex gap-3">
-        <button className="btn-learned pointer-events-none">
+        <Link href="/auth" className="btn-learned">
           Get Started
-        </button>
+        </Link>
       </div>
     </div>
   )
