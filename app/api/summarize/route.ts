@@ -171,22 +171,28 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check usage limit for authenticated users
+    // Require authentication
     const supabase = await createClient()
     const user = supabase ? (await supabase.auth.getUser()).data.user : null
 
-    if (user) {
-      const usageStatus = await checkUsageLimit(user.id, 'summarize')
-      if (!usageStatus.allowed) {
-        return NextResponse.json(
-          {
-            error: 'Daily limit reached',
-            code: 'LIMIT_REACHED',
-            usage: usageStatus,
-          },
-          { status: 403 }
-        )
-      }
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Authentication required', code: 'AUTH_REQUIRED' },
+        { status: 401 }
+      )
+    }
+
+    // Check usage limit
+    const usageStatus = await checkUsageLimit(user.id, 'summarize')
+    if (!usageStatus.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Daily limit reached',
+          code: 'LIMIT_REACHED',
+          usage: usageStatus,
+        },
+        { status: 403 }
+      )
     }
 
     const apiKey = process.env.OPENAI_API_KEY
@@ -239,10 +245,8 @@ export async function POST(request: NextRequest) {
       sourceUrl
     }
 
-    // Increment usage for authenticated users
-    if (user) {
-      await incrementUsage(user.id, 'summarize')
-    }
+    // Increment usage
+    await incrementUsage(user.id, 'summarize')
 
     return NextResponse.json(response)
   } catch (error) {

@@ -154,7 +154,7 @@ export default function HeroAnimation() {
           </div>
 
           <Link
-            href="/app"
+            href="/auth"
             className="btn-process inline-block"
           >
             Get Started

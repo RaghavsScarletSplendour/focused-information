@@ -6,7 +6,6 @@ import DumpForm from '@/components/DumpForm'
 import FocusCard from '@/components/FocusCard'
 import ArchitectReasoning from '@/components/ArchitectReasoning'
 import ArchiveDrawer from '@/components/ArchiveDrawer'
-import AuthModal from '@/components/AuthModal'
 import ShareModal from '@/components/ShareModal'
 import PaywallModal from '@/components/PaywallModal'
 import UsageBadge from '@/components/UsageBadge'
@@ -23,12 +22,11 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null)
   const [isDumpExpanded, setIsDumpExpanded] = useState(false)
   const [isArchiveOpen, setIsArchiveOpen] = useState(false)
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [isShareModalOpen, setIsShareModalOpen] = useState(false)
   const [isPaywallOpen, setIsPaywallOpen] = useState(false)
   const [pendingShareData, setPendingShareData] = useState<ShareData | null>(null)
 
-  const { user, isLoading: isAuthLoading, isConfigured: isAuthConfigured, signOut } = useAuth()
+  const { user, isLoading: isAuthLoading, signOut } = useAuth()
   const { queue, setQueue, isLoading: isQueueLoading, error: queueError, addItem, removeItem } = useQueue()
   const { archive, isLoading: isArchiveLoading, error: archiveError, addToArchive, removeFromArchive } = useArchive()
   const { tier, summarizations, canSummarize, refresh: refreshSubscription } = useSubscription()
@@ -290,43 +288,32 @@ export default function Home() {
       <div className="w-full max-w-2xl space-y-6">
       {/* Header with Auth, Usage, and Archive */}
       <div className="flex justify-between items-center">
-        {/* Auth Controls - only show when Supabase is configured */}
+        {/* Auth Controls */}
         <div className="text-xs">
-          {isAuthConfigured ? (
-            isAuthLoading ? (
-              <span className="text-faded animate-pulse">...</span>
-            ) : user ? (
-              <div className="flex items-center gap-3">
-                <span className="text-faded">{user.email}</span>
-                <button
-                  onClick={() => signOut()}
-                  className="text-faded hover:text-ink transition-colors underline underline-offset-2"
-                >
-                  Sign out
-                </button>
-              </div>
-            ) : (
+          {isAuthLoading ? (
+            <span className="text-faded animate-pulse">...</span>
+          ) : user ? (
+            <div className="flex items-center gap-3">
+              <span className="text-faded">{user.email}</span>
               <button
-                onClick={() => setIsAuthModalOpen(true)}
+                onClick={() => signOut()}
                 className="text-faded hover:text-ink transition-colors underline underline-offset-2"
               >
-                Sign in to sync
+                Sign out
               </button>
-            )
+            </div>
           ) : null}
         </div>
 
         {/* Usage Badge and Archive Toggle */}
         <div className="flex items-center gap-3">
-          {/* Usage Badge - show for authenticated users */}
-          {user && (
-            <UsageBadge
-              tier={tier}
-              used={summarizations.used}
-              limit={summarizations.limit}
-              onClick={() => setIsPaywallOpen(true)}
-            />
-          )}
+          {/* Usage Badge */}
+          <UsageBadge
+            tier={tier}
+            used={summarizations.used}
+            limit={summarizations.limit}
+            onClick={() => setIsPaywallOpen(true)}
+          />
 
           {/* Archive Toggle */}
           <button
@@ -418,12 +405,6 @@ export default function Home() {
         onClose={() => setIsArchiveOpen(false)}
         items={archive}
         onRequeue={handleRequeue}
-      />
-
-      {/* Auth Modal */}
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
       />
 
       {/* Share Modal */}

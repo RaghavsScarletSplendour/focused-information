@@ -42,7 +42,7 @@ export default function LandingPage() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="font-sans text-lg text-faded"
           >
-            Start learning one thing at a time. No signup required.
+            Start learning one thing at a time.
           </motion.p>
 
           <motion.div
@@ -52,7 +52,7 @@ export default function LandingPage() {
             transition={{ duration: 0.5, delay: 0.2 }}
           >
             <Link
-              href="/app"
+              href="/auth"
               className="btn-process inline-block"
             >
               Get Started
@@ -66,7 +66,7 @@ export default function LandingPage() {
             transition={{ duration: 0.5, delay: 0.4 }}
             className="font-mono text-xs text-faded"
           >
-            Free tier: 5 summarizations/day • Sign in to sync across devices
+            Free tier: 5 summarizations/day
           </motion.p>
         </div>
       </section>
@@ -78,7 +78,7 @@ export default function LandingPage() {
             Focus First — Built for learning
           </div>
           <div className="flex items-center gap-6 font-mono text-xs text-paper/40">
-            <Link href="/app" className="hover:text-paper/80 transition-colors">
+            <Link href="/auth" className="hover:text-paper/80 transition-colors">
               App
             </Link>
             <span>&copy; {new Date().getFullYear()}</span>

@@ -33,8 +33,13 @@ export async function updateSession(request: NextRequest) {
     },
   })
 
-  // Refresh session if expired
-  await supabase.auth.getUser()
+  // Get user to refresh session if expired
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // Protect /app route - redirect unauthenticated users to /auth
+  if (request.nextUrl.pathname.startsWith('/app') && !user) {
+    return NextResponse.redirect(new URL('/auth', request.url))
+  }
 
   return supabaseResponse
 }
